@@ -18,8 +18,9 @@
 </head>
 <body>
 	<div id="map" style="width: 100%; height: 100%"></div>
-
+    
 	<script src="leaflet/leaflet.js"></script>
+	<script src="jquery/jquery-1.11.0.min.js"></script>
 	<script>
 	    var sourceIcon = L.icon({
 	        iconUrl: 'images/marker-source.png',
@@ -50,7 +51,57 @@
 	        }
 	        marker = new L.marker(e.latlng);
 	        marker.setIcon(targetIcon);
-            marker.addTo(map);
+	        marker.addTo(map);
+
+	        if (previousMarker && marker) {
+	            // get from/to LatLng.
+	            var from = previousMarker.getLatLng();
+	            var to = marker.getLatLng();
+
+	            // build request data.
+	            var requestData = {
+	                Type: 'Regular',
+	                ReturnType: 'Route',
+	                Vehicle: 'Car',
+	                Hooks: [
+                        {
+                            Id:1,
+                            Latitude: from.lat,
+                            Longitude: from.lng,
+                            Tags: [
+                                {
+                                    Key: 'key',
+                                    Value: 'value'
+                                }
+                            ]
+                        },
+                        {
+                            Id:2,
+                            Latitude: to.lat,
+                            Longitude: to.lng,
+                            Tags: [
+                                {
+                                    Key: 'key',
+                                    Value: 'value'
+                                }
+                            ]
+                        }
+	                ]
+	            };
+
+                // execute request.
+	            $.ajax({
+	                type: 'POST',
+	                url: 'http://osmsharp.com:666/routing?format=json',
+	                dataType: 'json',
+	                data: JSON.stringify(requestData),
+	                contentType: 'application/json',
+                    processData: false,
+                    success: function(response) {
+                        
+                    }
+	            });
+	        }
 	    }
 
 	    map.on('click', onMapClick);

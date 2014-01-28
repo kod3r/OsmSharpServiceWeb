@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html>
 <head>
 	<title>OsmSharp - Routing service demo</title>
@@ -22,6 +22,8 @@
 	<script src="leaflet/leaflet.js"></script>
 	<script src="jquery/jquery-1.11.0.min.js"></script>
 	<script>
+        jQuery.support.cors = true;
+
 	    var sourceIcon = L.icon({
 	        iconUrl: 'images/marker-source.png',
 	        shadowUrl: 'images/marker-shadow.png'
@@ -31,12 +33,14 @@
 	        shadowUrl: 'images/marker-shadow.png'
 	    });
 
-	    var map = L.map('map').setView([51.0547, 3.2882], 15);
+	    var map = L.map('map').setView([51.0848, 3.4497], 15);
 
 	    L.tileLayer('http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png', {
 	        maxZoom: 18,
-	        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+	        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery ï¿½ <a href="http://cloudmade.com">CloudMade</a>'
 	    }).addTo(map);
+
+	    var geoJson = L.geoJson().addTo(map);
 
 	    var previousMarker = undefined;
 	    var marker = undefined;
@@ -61,7 +65,7 @@
 	            // build request data.
 	            var requestData = {
 	                Type: 'Regular',
-	                ReturnType: 'Route',
+	                ReturnType: 'LineString',
 	                Vehicle: 'Car',
 	                Hooks: [
                         {
@@ -92,12 +96,16 @@
                 // execute request.
 	            $.ajax({
 	                type: 'POST',
-	                url: 'http://osmsharp.com:666/routing?format=json',
-	                dataType: 'jsonp',
+	                contentType: 'application/json',
+	                url: 'http://mcbain:666/routing?format=json',
+	                dataType: 'json',
+	                crossDomain: true,
+	                cache: false,
 	                data: JSON.stringify(requestData),
-                    success: function(response) {
-                        
-                    }
+	                success: function (responseData, textStatus, jqXHR) {
+	                    geoJson.clearLayers();
+	                    geoJson.addData(responseData.RouteLineString);
+	                }
 	            });
 	        }
 	    }

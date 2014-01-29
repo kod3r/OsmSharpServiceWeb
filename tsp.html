@@ -79,25 +79,18 @@
 
         var geoJson = L.geoJson().addTo(map);
 
-        var previousMarker = undefined;
-        var marker = undefined;
+        var markers = [];
 
         function onMapClick(e) {
-            if (previousMarker) {
-                map.removeLayer(previousMarker);
-            }
-            previousMarker = marker;
-            if (previousMarker) {
-                previousMarker.setIcon(sourceIcon);
-            }
-            marker = new L.marker(e.latlng);
+            var marker = new L.marker(e.latlng);
             marker.setIcon(targetIcon);
             marker.addTo(map);
+            markers.push(marker);
 
-            if (previousMarker && marker) {
+            if (markers.length == 2) {
                 // get from/to LatLng.
-                var from = previousMarker.getLatLng();
-                var to = marker.getLatLng();
+                var from = markers[0].getLatLng();
+                var to = markers[1].getLatLng();
 
                 // build request data.
                 var requestData = {
@@ -129,6 +122,45 @@
                         }
                     ]
                 };
+
+                // execute request.
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: 'http://mcbain:666/routing?format=json',
+                    dataType: 'json',
+                    crossDomain: true,
+                    cache: false,
+                    data: JSON.stringify(requestData),
+                    success: function (responseData, textStatus, jqXHR) {
+                        geoJson.clearLayers();
+                        geoJson.addData(responseData.RouteLineString);
+                    }
+                });
+            } else if (markers.length > 2) {
+                // build request data.
+                var requestData = {
+                    Type: 'TSP',
+                    ReturnType: 'LineString',
+                    Vehicle: 'Car',
+                    Hooks: [
+                    ]
+                };
+
+                // add hooks.
+                for (var idx = 0; idx < markers.length; idx++)
+                {
+                    var latlng = markers[idx].getLatLng();
+
+                    requestData.Hooks.push(
+                    {
+                        Id: idx,
+                        Latitude: latlng.lat,
+                        Longitude: latlng.lng,
+                        Tags: [
+                        ]
+                    });
+                }
 
                 // execute request.
                 $.ajax({
